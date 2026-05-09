@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Serif+Display:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <p class="eyebrow">NSE Intraday Assistant</p>
+        <h1>{{ app_title }}</h1>
+        <p class="subtitle">
+          Enter a stock/index symbol and hold time. Backend analyzes last 5 trading days and gives winning probability for your hold duration.
+        </p>
+      </section>
+
+      <section class="panel">
+        <form id="signalForm" class="signal-form">
+          <label for="symbol">Stock Symbol</label>
+          <div class="row">
+            <input id="symbol" name="symbol" placeholder="e.g. RELIANCE, NIFTY50, BANKNIFTY, ^NSEI" required />
+            <input id="holdMinutes" name="holdMinutes" type="number" min="5" max="240" step="5" value="60" />
+            <select id="candleInterval" name="candleInterval">
+              <option value="auto" selected>Auto</option>
+              <option value="5m">5m</option>
+              <option value="15m">15m</option>
+              <option value="30m">30m</option>
+              <option value="60m">60m</option>
+            </select>
+            <button type="submit">Analyze</button>
+          </div>
+          <small>Tip: choose candle interval or keep Auto fallback. Hold time range is 5-240 min. Stocks like `RELIANCE` auto-convert to `RELIANCE.NS`; indices like `NIFTY50` and `BANKNIFTY` are supported.</small>
+        </form>
+
+        <div id="loading" class="loading hidden">Fetching intraday candles and running model...</div>
+        <div id="error" class="error hidden"></div>
+
+        <div id="result" class="result hidden">
+          <div class="card action-card">
+            <h2>Trade Decision</h2>
+            <p id="actionBadge" class="badge">-</p>
+            <div class="kpi-grid">
+              <div class="kpi">
+                <span class="kpi-label">Confidence</span>
+                <span id="confidenceText" class="kpi-value">-</span>
+              </div>
+              <div class="kpi">
+                <span class="kpi-label">Win Probability</span>
+                <span id="winningProbability" class="kpi-value">-</span>
+              </div>
+              <div class="kpi">
+                <span class="kpi-label">Hold Time</span>
+                <span id="holdTimeOut" class="kpi-value">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Stock Suggestion</h3>
+            <p id="stockSuggestion" class="signal-line"></p>
+          </div>
+
+          <div class="card">
+            <h3>Probability View</h3>
+            <div class="meta-chips">
+              <span class="chip" id="symbolOut">-</span>
+              <span class="chip" id="spotPrice">-</span>
+              <span class="chip" id="intervalOut">-</span>
+            </div>
+            <div class="bars">
+              <div class="bar-row">
+                <span id="probUp">UP</span>
+                <div class="bar-track"><div id="barUp" class="bar-fill up"></div></div>
+              </div>
+              <div class="bar-row">
+                <span id="probDown">DOWN</span>
+                <div class="bar-track"><div id="barDown" class="bar-fill down"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Options Suggestion</h3>
+            <p id="optionAction" class="option-pill">-</p>
+            <p id="optionHint" class="signal-line"></p>
+            <p id="optionSuggestion" class="signal-line"></p>
+          </div>
+
+          <div class="card">
+            <h3>Model Note</h3>
+            <p id="modelNote" class="muted"></p>
+            <p id="warning" class="warn"></p>
+          </div>
+
+          <div class="card action-card">
+            <h3>Why This Signal</h3>
+            <div id="snapshotGrid" class="snapshot-grid"></div>
+            <p id="indicatorLegend" class="legend-text"></p>
+            <div id="decisionFactors" class="factors-grid"></div>
+            <h4>Indicator Text Format</h4>
+            <pre id="analysisText" class="analysis-text"></pre>
+          </div>
+
+          <div class="card action-card">
+            <h3>Live Options Monitor</h3>
+            <p id="liveMeta" class="muted">Latest live rows from CSV monitors.</p>
+            <div id="liveError" class="error hidden"></div>
+            <div class="live-grid">
+              <div>
+                <h4>BUY_CALL</h4>
+                <div class="table-wrap">
+                  <table class="live-table">
+                    <thead>
+                      <tr>
+                        <th>Time</th>
+                        <th>Symbol</th>
+                        <th>Conf</th>
+                        <th>Spot</th>
+                        <th>URL</th>
+                      </tr>
+                    </thead>
+                    <tbody id="liveCallBody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div>
+                <h4>BUY_PUT</h4>
+                <div class="table-wrap">
+                  <table class="live-table">
+                    <thead>
+                      <tr>
+                        <th>Time</th>
+                        <th>Symbol</th>
+                        <th>Conf</th>
+                        <th>Spot</th>
+                        <th>URL</th>
+                      </tr>
+                    </thead>
+                    <tbody id="livePutBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>
